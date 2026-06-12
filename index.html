@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>John Doe | Developer Portfolio</title>
+    <meta name="description" content="Digital visiting card and portfolio for Ashtam Singh, Full Stack Developer.">
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+
+    <!-- Animated Background Elements -->
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+
+    <main class="container">
+        <!-- 3D Tilt Card Container -->
+        <div class="card-wrapper" id="cardWrapper">
+            <div class="glass-card" id="glassCard">
+
+                <div class="card-header">
+                    <div class="avatar-container">
+                        <img src="assets/1694080945790.jpeg" alt="John Doe Profile Picture" class="avatar">
+                        <div class="status-indicator"></div>
+                    </div>
+                    <div class="header-text">
+                        <h1 class="name">Ashtam Singh</h1>
+                        <h2 class="title">Tech Entrepreneur & Consultant.</h2>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <p class="bio">
+                        Bridging hardware and software to craft scalable, interactive event activations.
+                    </p>
+
+                    <div class="links-grid">
+                        <!-- <a href="https://github.com" target="_blank" class="social-btn github">
+                            <i class="fa-brands fa-github"></i>
+                            <span>GitHub</span>
+                        </a> -->
+                        <a href="https://linkedin.com/in/ashtam-singh" target="_blank" class="social-btn linkedin">
+                            <i class="fa-brands fa-linkedin-in"></i>
+                            <span>LinkedIn</span>
+                        </a>
+                        <!-- <a href="https://twitter.com" target="_blank" class="social-btn twitter">
+                            <i class="fa-brands fa-x-twitter"></i>
+                            <span>Twitter</span>
+                        </a>
+                        <a href="#" target="_blank" class="social-btn portfolio">
+                            <i class="fa-solid fa-globe"></i>
+                            <span>Portfolio</span>
+                        </a> -->
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <button id="downloadVcard" class="btn-primary">
+                        <i class="fa-solid fa-address-card"></i>
+                        Save Contact (vCard)
+                    </button>
+                    <button id="shareBtn" class="btn-icon" aria-label="Share">
+                        <i class="fa-solid fa-share-nodes"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notification for Share/vCard actions -->
+    <div id="toast" class="toast">Action completed!</div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
