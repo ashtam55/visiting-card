@@ -1,10 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- 1. 3D Tilt Effect ---
+    // --- 1. 3D Tilt Effect (Desktop & Mobile Gyro) ---
     const wrapper = document.getElementById('cardWrapper');
     const container = document.querySelector('.container');
 
-    // Only apply hover tilt effect on non-touch devices
+    // Desktop Mouse Hover Tilt (Towards the cursor)
     if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
         container.addEventListener('mousemove', (e) => {
             const rect = wrapper.getBoundingClientRect();
@@ -12,9 +12,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const x = e.clientX - rect.left - rect.width / 2;
             const y = e.clientY - rect.top - rect.height / 2;
 
-            // Calculate rotation. Adjust the multiplier for stronger/weaker effect
-            const rotateX = (y / (rect.height / 2)) * -10;
-            const rotateY = (x / (rect.width / 2)) * 10;
+            // Calculate rotation to tilt TOWARDS the cursor
+            // y is negative when cursor is in top half, we want rotateX to be negative to tilt top forward
+            const rotateX = (y / (rect.height / 2)) * 12; // Adjusted sensitivity
+            // x is negative when cursor is in left half, we want rotateY to be positive to tilt left forward
+            const rotateY = (x / (rect.width / 2)) * -12;
 
             wrapper.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
         });
@@ -28,6 +30,63 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 500);
         });
     }
+
+    // Mobile Gyroscope / Device Orientation Tilt
+    let hasGyroPermission = false;
+
+    async function requestDeviceOrientationPermission() {
+        if (typeof DeviceOrientationEvent !== 'undefined' && 
+            typeof DeviceOrientationEvent.requestPermission === 'function') {
+            try {
+                const permissionState = await DeviceOrientationEvent.requestPermission();
+                if (permissionState === 'granted') {
+                    window.addEventListener('deviceorientation', handleOrientation);
+                    hasGyroPermission = true;
+                }
+            } catch (error) {
+                console.error("Error requesting DeviceOrientation permission:", error);
+            }
+        } else {
+            // Non-iOS or older devices that do not require explicit permission prompt
+            window.addEventListener('deviceorientation', handleOrientation);
+            hasGyroPermission = true;
+        }
+    }
+
+    function handleOrientation(e) {
+        if (e.beta === null || e.gamma === null) return;
+
+        // e.beta: front-to-back tilt (-180 to 180). Normal holding angle is ~60 deg.
+        // e.gamma: left-to-right tilt (-90 to 90).
+        const beta = e.beta;
+        const gamma = e.gamma;
+
+        // Calculate target angles (pitch and roll)
+        // Subtracting 60 from beta assumes the user holds the phone at a ~60 degree viewing angle
+        let targetX = (beta - 60) * 0.4;
+        let targetY = gamma * 0.4;
+
+        // Limit maximum rotation angle to keep it clean and subtle
+        targetX = Math.max(-12, Math.min(12, targetX));
+        targetY = Math.max(-12, Math.min(12, targetY));
+
+        // Apply rotation (tilt towards the phone tilt)
+        wrapper.style.transform = `perspective(1000px) rotateX(${-targetX}deg) rotateY(${targetY}deg)`;
+        wrapper.style.transition = 'transform 0.1s ease-out';
+    }
+
+    // Request permissions on first mobile tap/interaction with the card
+    wrapper.addEventListener('click', () => {
+        if (!hasGyroPermission) {
+            requestDeviceOrientationPermission();
+        }
+    });
+
+    wrapper.addEventListener('touchstart', () => {
+        if (!hasGyroPermission) {
+            requestDeviceOrientationPermission();
+        }
+    });
 
     // --- 2. vCard Generation and Download ---
     const downloadBtn = document.getElementById('downloadVcard');
