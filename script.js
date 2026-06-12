@@ -1,92 +1,57 @@
 document.addEventListener('DOMContentLoaded', () => {
-
-    // --- 1. 3D Tilt Effect (Desktop & Mobile Gyro) ---
+    
+    // --- 1. 3D Tilt Effect (Desktop Mouse & Mobile Touch) ---
     const wrapper = document.getElementById('cardWrapper');
     const container = document.querySelector('.container');
 
-    // Desktop Mouse Hover Tilt (Towards the cursor)
+    // Unified tilt logic
+    function handleMove(clientX, clientY) {
+        const rect = wrapper.getBoundingClientRect();
+        // Calculate interaction position relative to the center of the card
+        const x = clientX - rect.left - rect.width / 2;
+        const y = clientY - rect.top - rect.height / 2;
+
+        // Calculate rotation to tilt TOWARDS the cursor/finger
+        const rotateX = (y / (rect.height / 2)) * 12; // vertical tilt
+        const rotateY = (x / (rect.width / 2)) * -12; // horizontal tilt
+
+        wrapper.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    }
+
+    function handleReset() {
+        // Smoothly reset back to flat
+        wrapper.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg)`;
+        wrapper.style.transition = 'transform 0.5s ease';
+        setTimeout(() => {
+            wrapper.style.transition = 'transform 0.1s';
+        }, 500);
+    }
+
+    // Determine if device supports hover interactions (desktop mouse)
     if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+        // Desktop mouse movement
         container.addEventListener('mousemove', (e) => {
-            const rect = wrapper.getBoundingClientRect();
-            // Calculate mouse position relative to the center of the card
-            const x = e.clientX - rect.left - rect.width / 2;
-            const y = e.clientY - rect.top - rect.height / 2;
-
-            // Calculate rotation to tilt TOWARDS the cursor
-            // y is negative when cursor is in top half, we want rotateX to be negative to tilt top forward
-            const rotateX = (y / (rect.height / 2)) * 12; // Adjusted sensitivity
-            // x is negative when cursor is in left half, we want rotateY to be positive to tilt left forward
-            const rotateY = (x / (rect.width / 2)) * -12;
-
-            wrapper.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            handleMove(e.clientX, e.clientY);
         });
 
-        container.addEventListener('mouseleave', () => {
-            // Reset to flat when mouse leaves
-            wrapper.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg)`;
-            wrapper.style.transition = 'transform 0.5s ease'; // Smooth reset
-            setTimeout(() => {
-                wrapper.style.transition = 'transform 0.1s'; // Remove smooth transition for next hover
-            }, 500);
-        });
-    }
-
-    // Mobile Gyroscope / Device Orientation Tilt
-    let hasGyroPermission = false;
-
-    async function requestDeviceOrientationPermission() {
-        if (typeof DeviceOrientationEvent !== 'undefined' && 
-            typeof DeviceOrientationEvent.requestPermission === 'function') {
-            try {
-                const permissionState = await DeviceOrientationEvent.requestPermission();
-                if (permissionState === 'granted') {
-                    window.addEventListener('deviceorientation', handleOrientation);
-                    hasGyroPermission = true;
-                }
-            } catch (error) {
-                console.error("Error requesting DeviceOrientation permission:", error);
+        container.addEventListener('mouseleave', handleReset);
+    } else {
+        // Mobile touch movement (Zero permissions required, works on both Chrome & Safari)
+        container.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                handleMove(e.touches[0].clientX, e.touches[0].clientY);
             }
-        } else {
-            // Non-iOS or older devices that do not require explicit permission prompt
-            window.addEventListener('deviceorientation', handleOrientation);
-            hasGyroPermission = true;
-        }
+        }, { passive: true });
+
+        container.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1) {
+                handleMove(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, { passive: true });
+
+        container.addEventListener('touchend', handleReset);
+        container.addEventListener('touchcancel', handleReset);
     }
-
-    function handleOrientation(e) {
-        if (e.beta === null || e.gamma === null) return;
-
-        // e.beta: front-to-back tilt (-180 to 180). Normal holding angle is ~60 deg.
-        // e.gamma: left-to-right tilt (-90 to 90).
-        const beta = e.beta;
-        const gamma = e.gamma;
-
-        // Calculate target angles (pitch and roll)
-        // Subtracting 60 from beta assumes the user holds the phone at a ~60 degree viewing angle
-        let targetX = (beta - 60) * 0.4;
-        let targetY = gamma * 0.4;
-
-        // Limit maximum rotation angle to keep it clean and subtle
-        targetX = Math.max(-12, Math.min(12, targetX));
-        targetY = Math.max(-12, Math.min(12, targetY));
-
-        // Apply rotation (tilt towards the phone tilt)
-        wrapper.style.transform = `perspective(1000px) rotateX(${-targetX}deg) rotateY(${targetY}deg)`;
-        wrapper.style.transition = 'transform 0.1s ease-out';
-    }
-
-    // Request permissions on first mobile tap/interaction with the card
-    wrapper.addEventListener('click', () => {
-        if (!hasGyroPermission) {
-            requestDeviceOrientationPermission();
-        }
-    });
-
-    wrapper.addEventListener('touchstart', () => {
-        if (!hasGyroPermission) {
-            requestDeviceOrientationPermission();
-        }
-    });
 
     // --- 2. vCard Generation and Download ---
     const downloadBtn = document.getElementById('downloadVcard');
